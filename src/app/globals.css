@@ -70,3 +70,16 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+
+@layer components {
+  .pagination-button {
+    @apply px-3 py-2 text-sm font-medium rounded-md transition-colors;
+    @apply hover:bg-accent hover:text-accent-foreground;
+    @apply disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .pagination-button.active {
+    @apply bg-primary text-primary-foreground;
+  }
+}

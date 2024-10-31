@@ -77,6 +77,63 @@ export default function BookCatalog() {
         setCurrentPage(1)
     }
 
+    // return (
+    //     <div className="space-y-6">
+    //         <h1 className="text-3xl font-bold">Book Catalog</h1>
+    //         <SearchFilters
+    //             searchTerm={searchTerm}
+    //             onSearchChange={handleSearchChange}
+    //             selectedCategory={selectedCategory}
+    //             onCategoryChange={handleCategoryChange}
+    //             categories={categories}
+    //         />
+    //         {isLoading ? (
+    //             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    //                 {[...Array(12)].map((_, index) => (
+    //                     <div key={index} className="h-64 bg-gray-200 rounded-lg animate-pulse"></div>
+    //                 ))}
+    //             </div>
+    //         ) : (
+    //             <>
+    //                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    //                     {books.map((book) => (
+    //                         <BookCard key={book.id} book={book} />
+    //                     ))}
+    //                 </div>
+    //                 <Pagination>
+    //                     <PaginationContent>
+    //                         <PaginationItem>
+    //                             <PaginationPrevious
+    //                                 href="#"
+    //                                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+    //                                 disabled={currentPage === 1}
+    //                             />
+    //                         </PaginationItem>
+    //                         {[...Array(totalPages)].map((_, index) => (
+    //                             <PaginationItem key={index}>
+    //                                 <PaginationLink
+    //                                     href="#"
+    //                                     onClick={() => setCurrentPage(index + 1)}
+    //                                     isActive={currentPage === index + 1}
+    //                                 >
+    //                                     {index + 1}
+    //                                 </PaginationLink>
+    //                             </PaginationItem>
+    //                         ))}
+    //                         <PaginationItem>
+    //                             <PaginationNext
+    //                                 href="#"
+    //                                 onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+    //                                 disabled={currentPage === totalPages}
+    //                             />
+    //                         </PaginationItem>
+    //                     </PaginationContent>
+    //                 </Pagination>
+    //             </>
+    //         )}
+    //     </div>
+    // )
+
     return (
         <div className="space-y-6">
             <h1 className="text-3xl font-bold">Book Catalog</h1>
@@ -89,48 +146,54 @@ export default function BookCatalog() {
             />
             {isLoading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {[...Array(12)].map((_, index) => (
-                        <div key={index} className="h-64 bg-gray-200 rounded-lg animate-pulse"></div>
+                    {/* 添加key属性 */}
+                    {Array.from({ length: 12 }).map((_, index) => (
+                        <div key={`skeleton-${index}`} className="h-64 bg-gray-200 rounded-lg animate-pulse"></div>
                     ))}
                 </div>
             ) : (
                 <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                         {books.map((book) => (
-                            <BookCard key={book.id} book={book} />
+                            <BookCard key={book.book_id} book={book} />
                         ))}
                     </div>
-                    <Pagination>
+                    <nav>
                         <PaginationContent>
+                            {/* 修复嵌套 li 标签的问题 */}
                             <PaginationItem>
-                                <PaginationPrevious
-                                    href="#"
+                                <button
                                     onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                                     disabled={currentPage === 1}
-                                />
+                                    className="pagination-button"
+                                >
+                                    Previous
+                                </button>
                             </PaginationItem>
-                            {[...Array(totalPages)].map((_, index) => (
-                                <PaginationItem key={index}>
-                                    <PaginationLink
-                                        href="#"
+                            {Array.from({ length: totalPages }).map((_, index) => (
+                                <PaginationItem key={`page-${index + 1}`}>
+                                    <button
                                         onClick={() => setCurrentPage(index + 1)}
-                                        isActive={currentPage === index + 1}
+                                        className={`pagination-button ${currentPage === index + 1 ? 'active' : ''}`}
                                     >
                                         {index + 1}
-                                    </PaginationLink>
+                                    </button>
                                 </PaginationItem>
                             ))}
                             <PaginationItem>
-                                <PaginationNext
-                                    href="#"
+                                <button
                                     onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                                     disabled={currentPage === totalPages}
-                                />
+                                    className="pagination-button"
+                                >
+                                    Next
+                                </button>
                             </PaginationItem>
                         </PaginationContent>
-                    </Pagination>
+                    </nav>
                 </>
             )}
         </div>
     )
+
 }

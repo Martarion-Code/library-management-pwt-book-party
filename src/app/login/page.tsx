@@ -182,8 +182,18 @@ export default function Login() {
                 </CardContent>
                 <CardFooter>
                     <div className="w-full text-center">
+                        {/*<p className="text-sm text-muted-foreground">*/}
+                        {/*    Don't have an account?{' '}*/}
+                        {/*    <Link*/}
+                        {/*        href="/register"*/}
+                        {/*        className="text-primary hover:underline font-medium"*/}
+                        {/*    >*/}
+                        {/*        Create one now*/}
+                        {/*    </Link>*/}
+                        {/*</p>*/}
+
                         <p className="text-sm text-muted-foreground">
-                            Don't have an account?{' '}
+                            Don&apos;t have an account?{' '}
                             <Link
                                 href="/register"
                                 className="text-primary hover:underline font-medium"

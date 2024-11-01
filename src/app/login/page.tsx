@@ -24,14 +24,25 @@ export default function Login() {
         setError(null)
         setIsLoading(true)
 
+        // try {
+        //     await signIn(email, password)
+        //     router.push('/dashboard')
+        // } catch (_) {
+        //     setError('Invalid credentials. Please check your email and password.')
+        // } finally {
+        //     setIsLoading(false)
+        // }
+
         try {
             await signIn(email, password)
             router.push('/dashboard')
-        } catch (_) {
+        } catch (error) {
+            console.error('Login error:', error);
             setError('Invalid credentials. Please check your email and password.')
         } finally {
             setIsLoading(false)
         }
+
     }
 
     return (

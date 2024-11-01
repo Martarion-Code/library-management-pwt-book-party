@@ -114,7 +114,7 @@ export default function Login() {
         try {
             await signIn(email, password)
             router.push('/dashboard')
-        } catch (error) {
+        } catch (_) {
             setError('Invalid credentials. Please check your email and password.')
         } finally {
             setIsLoading(false)

@@ -865,7 +865,7 @@ export default function BookDetails() {
                 return
             }
             setBook(data)
-        } catch (err) {
+        } catch (_) {
             toast({
                 title: "Error",
                 description: "Failed to fetch book details",
@@ -913,7 +913,7 @@ export default function BookDetails() {
                 description: "Book borrowed successfully",
             })
             fetchBook()
-        } catch (err) {
+        } catch (_) {
             toast({
                 title: "Error",
                 description: "Failed to borrow the book",
@@ -951,7 +951,7 @@ export default function BookDetails() {
                 description: "Book reserved successfully",
             })
             fetchBook()
-        } catch (err) {
+        } catch (_) {
             toast({
                 title: "Error",
                 description: "Failed to reserve the book",

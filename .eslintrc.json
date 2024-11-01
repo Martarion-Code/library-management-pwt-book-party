@@ -2,26 +2,17 @@
 //  "extends": ["next/core-web-vitals", "next/typescript"]
 //}
 
-
-//{
-//  "extends": ["next/core-web-vitals", "next/typescript"],
-//  "rules": {
-//    "@typescript-eslint/no-unused-vars": "warn",
-//    "react-hooks/exhaustive-deps": "warn",
-//    "react/no-unescaped-entities": "warn",
-//    "@typescript-eslint/no-empty-interface": "warn"
-//  }
-//}
-
-
-
 {
   "extends": ["next/core-web-vitals", "next/typescript"],
   "rules": {
-    "@typescript-eslint/no-unused-vars": "warn",
-    "react-hooks/exhaustive-deps": "warn",
-    "react/no-unescaped-entities": "warn",
-    "@typescript-eslint/no-empty-interface": "warn"
+    "@typescript-eslint/no-unused-vars": ["warn", {
+      "argsIgnorePattern": "^_",
+      "varsIgnorePattern": "^_",
+      "caughtErrorsIgnorePattern": "^_"
+    }],
+    "@typescript-eslint/no-empty-interface": "warn",
+    "no-unused-vars": "off",
+    "react-hooks/exhaustive-deps": "warn"
   },
   "ignorePatterns": ["src/types/supabase.ts"]
 }

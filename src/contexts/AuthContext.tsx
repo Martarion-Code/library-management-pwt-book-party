@@ -36,11 +36,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (error) throw error
     }
 
-    // const signUp = async (email: string, password: string) => {
-    //     const { error } = await supabase.auth.signUp({ email, password })
-    //     if (error) throw error
-    // }
-
     const signUp = async (email: string, password: string, username: string, fullName: string) => {
         try {
             // 1. 创建认证用户

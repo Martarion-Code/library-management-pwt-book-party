@@ -1,14 +1,3 @@
-// export type Book = {
-//     id: number;
-//     title: string;
-//     author: string;
-//     isbn: string;
-//     category: string;
-//     available: boolean;
-//     cover_image?: string;
-// }
-
-
 export type Book = {
     book_id: string;
     title: string;

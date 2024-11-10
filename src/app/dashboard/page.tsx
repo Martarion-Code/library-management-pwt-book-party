@@ -2,6 +2,9 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+
+import { useRouter } from 'next/navigation'
+
 import { supabase } from '@/lib/supabase-client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -24,9 +27,15 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
 import Link from 'next/link'
 
+const calculateProgress = () => {
+    return 0 // 你可以根据需要实现具体的计算逻辑
+}
 
 export default function Dashboard() {
     const { user } = useAuth()
+
+    const router = useRouter()
+
     const [stats, setStats] = useState<DashboardStats>({
         totalbooks: 0,
         borrowedbooks: 0,
@@ -36,6 +45,14 @@ export default function Dashboard() {
     const [isLoading, setIsLoading] = useState(true)
     const [isReturning, setIsReturning] = useState<string | null>(null)
     const { toast } = useToast()
+
+    // 如果用户未登录，重定向到登录页面
+    useEffect(() => {
+        if (!user) {
+            router.push('/login')
+            return
+        }
+    }, [user, router])
 
     const fetchDashboardData = useCallback(async () => {
         if (!user) return
@@ -138,182 +155,185 @@ export default function Dashboard() {
         )
     }
 
+    // 如果没有用户，返回空内容（实际会被useEffect重定向）
     if (!user) {
-        return (
-            <div className="space-y-8">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-                    <Button variant="outline" onClick={() => fetchDashboardData()}>
-                        <RotateCcw className="mr-2 h-4 w-4"/>
-                        Refresh
-                    </Button>
-                </div>
+        return null
+    }
 
-                {/* Stats Overview */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Card className="bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900 dark:to-blue-800">
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Total Books</CardTitle>
-                            <Library className="h-4 w-4 text-blue-600 dark:text-blue-400"/>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{stats.totalbooks}</div>
-                            <p className="text-xs text-muted-foreground">
-                                Available in library
-                            </p>
-                        </CardContent>
-                    </Card>
-                    <Card
-                        className="bg-gradient-to-br from-green-100 to-green-50 dark:from-green-900 dark:to-green-800">
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Borrowed Books</CardTitle>
-                            <BookOpen className="h-4 w-4 text-green-600 dark:text-green-400"/>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{stats.borrowedbooks}</div>
-                            <Progress value={calculateProgress()} className="mt-2"/>
-                        </CardContent>
-                    </Card>
-                    <Card
-                        className="bg-gradient-to-br from-yellow-100 to-yellow-50 dark:from-yellow-900 dark:to-yellow-800">
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Due Soon</CardTitle>
-                            <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400"/>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">
-                                {borrowedBooks.filter(book => {
-                                    const dueDate = new Date(book.due_date)
-                                    const today = new Date()
-                                    const diff = dueDate.getTime() - today.getTime()
-                                    return diff > 0 && diff < 3 * 24 * 60 * 60 * 1000 // 3 days
-                                }).length}
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                Books due in next 3 days
-                            </p>
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-gradient-to-br from-red-100 to-red-50 dark:from-red-900 dark:to-red-800">
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Overdue Books</CardTitle>
-                            <BookX className="h-4 w-4 text-red-600 dark:text-red-400"/>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{stats.overduebooks}</div>
-                            <p className="text-xs text-muted-foreground">
-                                Please return immediately
-                            </p>
-                        </CardContent>
-                    </Card>
-                </div>
+    return (
+        <div className="space-y-8">
+            <div className="flex items-center justify-between">
+                <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+                <Button variant="outline" onClick={() => fetchDashboardData()}>
+                    <RotateCcw className="mr-2 h-4 w-4"/>
+                    Refresh
+                </Button>
+            </div>
 
-                {/* Borrowed Books */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Currently Borrowed Books</CardTitle>
-                        <CardDescription>
-                            Manage your borrowed books and their due dates
-                        </CardDescription>
+            {/* Stats Overview */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Card className="bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900 dark:to-blue-800">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium">Total Books</CardTitle>
+                        <Library className="h-4 w-4 text-blue-600 dark:text-blue-400"/>
                     </CardHeader>
                     <CardContent>
-                        {borrowedBooks.length === 0 ? (
-                            <div className="text-center py-6">
-                                <BookOpen className="h-12 w-12 mx-auto text-muted-foreground"/>
-                                <h3 className="mt-2 text-lg font-semibold">No books borrowed</h3>
-                                <p className="text-sm text-muted-foreground">
-                                    Visit our catalog to discover and borrow books
-                                </p>
-                                <Button className="mt-4" asChild>
-                                    {/*<a href="/books">Browse Books</a>*/}
-                                    <Link href="/books">Browse Books</Link>
-                                </Button>
-                            </div>
-                        ) : (
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Book</TableHead>
-                                        <TableHead>Due Date</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead>Action</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {borrowedBooks.map((book) => {
-                                        const isOverdue = isPast(new Date(book.due_date))
-                                        const isDueSoon = !isOverdue &&
-                                            new Date(book.due_date).getTime() - new Date().getTime() < 3 * 24 * 60 * 60 * 1000
-
-                                        return (
-                                            <TableRow key={book.id}>
-                                                <TableCell className="font-medium">
-                                                    <div className="flex items-center space-x-3">
-                                                        <div className="font-medium">{book.title}</div>
-                                                        <span className="text-muted-foreground">
-                                                            by {book.author}
-                                                        </span>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    {format(new Date(book.due_date), 'MMM dd, yyyy')}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {isOverdue ? (
-                                                        <div className="flex items-center">
-                                                            <AlertTriangle className="h-4 w-4 text-destructive mr-2"/>
-                                                            <span className="text-destructive">Overdue</span>
-                                                        </div>
-                                                    ) : isDueSoon ? (
-                                                        <div className="flex items-center">
-                                                            <Clock className="h-4 w-4 text-yellow-500 mr-2"/>
-                                                            <span className="text-yellow-500">Due Soon</span>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="flex items-center">
-                                                            <CheckCircle2 className="h-4 w-4 text-green-500 mr-2"/>
-                                                            <span className="text-green-500">On Time</span>
-                                                        </div>
-                                                    )}
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => handleReturnBook(book.id)}
-                                                        disabled={isReturning === book.id}
-                                                    >
-                                                        {isReturning === book.id ? (
-                                                            <>
-                                                                <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
-                                                                Returning...
-                                                            </>
-                                                        ) : (
-                                                            'Return Book'
-                                                        )}
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        )
-                                    })}
-                                </TableBody>
-                            </Table>
-                        )}
+                        <div className="text-2xl font-bold">{stats.totalbooks}</div>
+                        <p className="text-xs text-muted-foreground">
+                            Available in library
+                        </p>
                     </CardContent>
                 </Card>
-
-                {stats.overduebooks > 0 && (
-                    <Alert variant="destructive">
-                        <AlertTriangle className="h-4 w-4"/>
-                        <AlertTitle>Overdue Books Notice</AlertTitle>
-                        <AlertDescription>
-                            You have {stats.overduebooks} overdue {stats.overduebooks === 1 ? 'book' : 'books'}.
-                            Please return them as soon as possible to avoid additional fees.
-                        </AlertDescription>
-                    </Alert>
-                )}
-                <Toaster/>
+                <Card
+                    className="bg-gradient-to-br from-green-100 to-green-50 dark:from-green-900 dark:to-green-800">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium">Borrowed Books</CardTitle>
+                        <BookOpen className="h-4 w-4 text-green-600 dark:text-green-400"/>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{stats.borrowedbooks}</div>
+                        <Progress value={calculateProgress()} className="mt-2"/>
+                    </CardContent>
+                </Card>
+                <Card
+                    className="bg-gradient-to-br from-yellow-100 to-yellow-50 dark:from-yellow-900 dark:to-yellow-800">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium">Due Soon</CardTitle>
+                        <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400"/>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">
+                            {borrowedBooks.filter(book => {
+                                const dueDate = new Date(book.due_date)
+                                const today = new Date()
+                                const diff = dueDate.getTime() - today.getTime()
+                                return diff > 0 && diff < 3 * 24 * 60 * 60 * 1000 // 3 days
+                            }).length}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            Books due in next 3 days
+                        </p>
+                    </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-red-100 to-red-50 dark:from-red-900 dark:to-red-800">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium">Overdue Books</CardTitle>
+                        <BookX className="h-4 w-4 text-red-600 dark:text-red-400"/>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{stats.overduebooks}</div>
+                        <p className="text-xs text-muted-foreground">
+                            Please return immediately
+                        </p>
+                    </CardContent>
+                </Card>
             </div>
-        )
-    }
+
+            {/* Borrowed Books */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Currently Borrowed Books</CardTitle>
+                    <CardDescription>
+                        Manage your borrowed books and their due dates
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {borrowedBooks.length === 0 ? (
+                        <div className="text-center py-6">
+                            <BookOpen className="h-12 w-12 mx-auto text-muted-foreground"/>
+                            <h3 className="mt-2 text-lg font-semibold">No books borrowed</h3>
+                            <p className="text-sm text-muted-foreground">
+                                Visit our catalog to discover and borrow books
+                            </p>
+                            <Button className="mt-4" asChild>
+                                {/*<a href="/books">Browse Books</a>*/}
+                                <Link href="/books">Browse Books</Link>
+                            </Button>
+                        </div>
+                    ) : (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Book</TableHead>
+                                    <TableHead>Due Date</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Action</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {borrowedBooks.map((book) => {
+                                    const isOverdue = isPast(new Date(book.due_date))
+                                    const isDueSoon = !isOverdue &&
+                                        new Date(book.due_date).getTime() - new Date().getTime() < 3 * 24 * 60 * 60 * 1000
+
+                                    return (
+                                        <TableRow key={book.id}>
+                                            <TableCell className="font-medium">
+                                                <div className="flex items-center space-x-3">
+                                                    <div className="font-medium">{book.title}</div>
+                                                    <span className="text-muted-foreground">
+                                                        by {book.author}
+                                                    </span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                {format(new Date(book.due_date), 'MMM dd, yyyy')}
+                                            </TableCell>
+                                            <TableCell>
+                                                {isOverdue ? (
+                                                    <div className="flex items-center">
+                                                        <AlertTriangle className="h-4 w-4 text-destructive mr-2"/>
+                                                        <span className="text-destructive">Overdue</span>
+                                                    </div>
+                                                ) : isDueSoon ? (
+                                                    <div className="flex items-center">
+                                                        <Clock className="h-4 w-4 text-yellow-500 mr-2"/>
+                                                        <span className="text-yellow-500">Due Soon</span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center">
+                                                        <CheckCircle2 className="h-4 w-4 text-green-500 mr-2"/>
+                                                        <span className="text-green-500">On Time</span>
+                                                    </div>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => handleReturnBook(book.id)}
+                                                    disabled={isReturning === book.id}
+                                                >
+                                                    {isReturning === book.id ? (
+                                                        <>
+                                                            <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                                                            Returning...
+                                                        </>
+                                                    ) : (
+                                                        'Return Book'
+                                                    )}
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    )
+                                })}
+                            </TableBody>
+                        </Table>
+                    )}
+                </CardContent>
+            </Card>
+
+            {stats.overduebooks > 0 && (
+                <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4"/>
+                    <AlertTitle>Overdue Books Notice</AlertTitle>
+                    <AlertDescription>
+                        You have {stats.overduebooks} overdue {stats.overduebooks === 1 ? 'book' : 'books'}.
+                        Please return them as soon as possible to avoid additional fees.
+                    </AlertDescription>
+                </Alert>
+            )}
+            <Toaster/>
+        </div>
+    )
 }

@@ -226,22 +226,109 @@ export default function BookDetails() {
             return
         }
 
+        if (!book || book.available_copies <= 0) {
+            toast({
+                title: "Error",
+                description: "This book is not available for borrowing",
+                variant: "destructive",
+            })
+            return
+        }
+
         setIsBorrowing(true)
         try {
+
+            // 首先检查用户是否在users表中存在
+            const { data: userData, error: userError } = await supabase
+                .from('users')
+                // .select('user_id')
+                .select('*')
+                .eq('user_id', user.id)
+                .single()
+
+            if (userError || !userData) {
+                toast({
+                    title: "Error",
+                    description: "User profile not found. Please try logging in again.",
+                    variant: "destructive",
+                })
+                return
+            }
+
+
             const dueDate = new Date()
             dueDate.setDate(dueDate.getDate() + 14)
 
-            const { error } = await supabase.rpc('borrow_book', {
-                p_user_id: user.id,
-                p_book_id: bookId,
-                p_due_date: dueDate.toISOString()
-            })
 
-            if (error) {
-                console.error('Borrow error:', error);
+            // const { error } = await supabase.rpc('borrow_book', {
+            //     p_user_id: user.id,
+            //     p_book_id: bookId,
+            //     p_due_date: dueDate.toISOString()
+            // })
+
+            // 调用存储过程前先检查参数类型
+            // const { error: borrowError } = await supabase.rpc('borrow_book', {
+            //     p_user_id: user.id,
+            //     p_book_id: bookId,
+            //     p_due_date: dueDate.toISOString()
+            // })
+
+
+            // 直接插入到loans表而不是使用RPC
+            // const { error: borrowError } = await supabase
+            //     .from('loans')
+            //     .insert({
+            //         user_id: user.id,
+            //         book_id: bookId,
+            //         due_date: dueDate.toISOString(),
+            //         checkout_date: new Date().toISOString(),
+            //         status: 'borrowed'
+            //     })
+
+            const { data: loanData, error: loanError } = await supabase
+                .from('loans')
+                .insert([
+                    {
+                        user_id: user.id,
+                        book_id: bookId,
+                        due_date: dueDate.toISOString(),
+                        checkout_date: new Date().toISOString(),
+                        status: 'borrowed'
+                    }
+                ])
+                .select()
+                .single()
+
+
+            if (loanError) {
+                console.error('Loan creation error:', loanError)
                 toast({
                     title: "Error",
-                    description: "Failed to borrow the book",
+                    description: "Failed to create loan record",
+                    variant: "destructive",
+                })
+                return
+            }
+
+
+            // 更新书籍可用数量
+            const { error: updateError } = await supabase
+                .from('books')
+                .update({
+                    available_copies: book.available_copies - 1
+                })
+                .eq('book_id', bookId)
+
+            if (updateError) {
+                // 如果更新失败，回滚借阅记录
+                await supabase
+                    .from('loans')
+                    .delete()
+                    .eq('loan_id', loanData.loan_id)
+
+                toast({
+                    title: "Error",
+                    description: "Failed to update book availability",
                     variant: "destructive",
                 })
                 return
@@ -251,12 +338,84 @@ export default function BookDetails() {
                 title: "Success",
                 description: "Book borrowed successfully",
             })
-            fetchBook()
+
+            // if (error) {
+            //     console.error('Borrow error:', error)
+            //     toast({
+            //         title: "Error",
+            //         description: "Failed to borrow the book",
+            //         variant: "destructive",
+            //     })
+            //     return
+            // }
+
+            // if (borrowError) {
+            //     console.error('Borrow error:', borrowError)
+            //     let errorMessage = "Failed to borrow the book"
+            //     if (borrowError.message) {
+            //         errorMessage += `: ${borrowError.message}`
+            //     }
+            //     toast({
+            //         title: "Error",
+            //         description: errorMessage,
+            //         variant: "destructive",
+            //     })
+            //     return
+            // }
+            //
+            // // 更新书籍的可用副本数
+            // const { error: updateError } = await supabase
+            //     .from('books')
+            //     .update({
+            //         available_copies: book.available_copies - 1
+            //     })
+            //     .eq('book_id', bookId)
+            //
+            // if (updateError) {
+            //     console.error('Update error:', updateError)
+            //     // 如果更新失败，回滚借书操作
+            //     await supabase
+            //         .from('loans')
+            //         .delete()
+            //         .eq('book_id', bookId)
+            //         .eq('user_id', user.id)
+            //         .eq('status', 'borrowed')
+            //
+            //     toast({
+            //         title: "Error",
+            //         description: "Failed to update book availability",
+            //         variant: "destructive",
+            //     })
+            //     return
+            // }
+            //
+            //
+            //
+            // toast({
+            //     title: "Success",
+            //     description: "Book borrowed successfully",
+            // })
+
+
+    //         fetchBook()
+    //     } catch (error) {
+    //         console.error('Borrow error:', error)
+    //         toast({
+    //             title: "Error",
+    //             description: "Failed to borrow the book",
+    //             variant: "destructive",
+    //         })
+    //     } finally {
+    //         setIsBorrowing(false)
+    //     }
+    // }
+
+            await fetchBook() // 重新获取图书信息以更新可用副本数
         } catch (error) {
-            console.error('Borrow error:', error);
+            console.error('Borrow error:', error)
             toast({
                 title: "Error",
-                description: "Failed to borrow the book",
+                description: "An unexpected error occurred while borrowing the book",
                 variant: "destructive",
             })
         } finally {
@@ -270,18 +429,53 @@ export default function BookDetails() {
             return
         }
 
+        if (!book) {
+            toast({
+                title: "Error",
+                description: "Book information is not available",
+                variant: "destructive",
+            })
+            return
+        }
+
         setIsReserving(true)
         try {
-            const { error } = await supabase.rpc('reserve_book', {
-                book_id: parseInt(bookId),
+            // const { error } = await supabase.rpc('reserve_book', {
+            //     book_id: parseInt(bookId),
+            //     user_id: user.id
+            // })
+
+
+            // 确保转换为数字类型
+            const numericBookId = parseInt(bookId, 10)
+            if (isNaN(numericBookId)) {
+                throw new Error('Invalid book ID')
+            }
+
+            const { error: reserveError } = await supabase.rpc('reserve_book', {
+                book_id: numericBookId,
                 user_id: user.id
             })
 
-            if (error) {
-                console.error('Reserve error:', error);
+            // if (error) {
+            //     console.error('Reserve error:', error);
+            //     toast({
+            //         title: "Error",
+            //         description: "Failed to reserve the book",
+            //         variant: "destructive",
+            //     })
+            //     return
+            // }
+
+            if (reserveError) {
+                console.error('Reserve error:', reserveError)
+                let errorMessage = "Failed to reserve the book"
+                if (reserveError.message) {
+                    errorMessage += `: ${reserveError.message}`
+                }
                 toast({
                     title: "Error",
-                    description: "Failed to reserve the book",
+                    description: errorMessage,
                     variant: "destructive",
                 })
                 return
@@ -291,18 +485,42 @@ export default function BookDetails() {
                 title: "Success",
                 description: "Book reserved successfully",
             })
-            fetchBook()
+
+
+
+    //         fetchBook()
+    //     } catch (error) {
+    //         console.error('Reserve error:', error);
+    //         toast({
+    //             title: "Error",
+    //             description: "Failed to reserve the book",
+    //             variant: "destructive",
+    //         })
+    //     } finally {
+    //         setIsReserving(false)
+    //     }
+    // }
+
+            await fetchBook()
         } catch (error) {
-            console.error('Reserve error:', error);
+            console.error('Reserve error:', error)
             toast({
                 title: "Error",
-                description: "Failed to reserve the book",
+                description: "An unexpected error occurred while reserving the book",
                 variant: "destructive",
             })
         } finally {
             setIsReserving(false)
         }
     }
+
+
+
+
+
+
+
+
 
     if (isLoading) {
         return (

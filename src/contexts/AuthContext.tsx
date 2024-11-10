@@ -8,7 +8,6 @@ type AuthContextType = {
     user: User | null
     loading: boolean
     signIn: (email: string, password: string) => Promise<void>
-    // signUp: (email: string, password: string) => Promise<void>
     signUp: (email: string, password: string, username: string, fullName: string) => Promise<void>
     signOut: () => Promise<void>
 }
@@ -80,49 +79,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         setupAuth()
 
-
-
-        // const { data: authListener } = supabase.auth.onAuthStateChange(
-        //     async (event, session) => {
-        //         setUser(session?.user ?? null)
-        //         setLoading(false)
-        //     }
-        // )
-
-
-        // const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-        //     const currentUser = session?.user ?? null
-        //     setUser(currentUser)
-        //     setLoading(false)
-        //
-        //     // 如果用户登录，确保users表中存在对应记录
-        //     if (currentUser) {
-        //         const { data: existingUser, error: checkError } = await supabase
-        //             .from('users')
-        //             .select('user_id')
-        //             .eq('user_id', currentUser.id)
-        //             .single()
-        //
-        //         if (!existingUser && !checkError) {
-        //             // 如果用户不存在，创建用户记录
-        //             const { error: insertError } = await supabase
-        //                 .from('users')
-        //                 .insert({
-        //                     user_id: currentUser.id,
-        //                     email: currentUser.email,
-        //                     username: currentUser.email?.split('@')[0] || 'user',
-        //                     full_name: currentUser.user_metadata.full_name || 'Unknown',
-        //                     password_hash: 'PLACEHOLDER', // 实际项目中应该使用proper hashing
-        //                     membership_type: 'regular'
-        //                 })
-        //
-        //             if (insertError) {
-        //                 console.error('Error creating user record:', insertError)
-        //             }
-        //         }
-        //     }
-        // })
-
         const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (session?.user) {
                 try {
@@ -143,11 +99,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     }, [])
 
-    // const signIn = async (email: string, password: string) => {
-    //     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    //     if (error) throw error
-    // }
-
     const signIn = async (email: string, password: string) => {
         const { data, error } = await supabase.auth.signInWithPassword({
             email,
@@ -159,51 +110,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             await syncUserProfile(data.user)
         }
     }
-
-    // const signUp = async (email: string, password: string, username: string, fullName: string) => {
-    //     try {
-    //         // 1. 创建认证用户
-    //         const { data: authData, error: authError } = await supabase.auth.signUp({
-    //             email,
-    //             password,
-    //             options: {
-    //                 data: {
-    //                     username,
-    //                     full_name: fullName
-    //                 }
-    //             }
-    //         })
-    //
-    //         if (authError) throw authError
-    //         if (!authData.user) throw new Error('Failed to create auth user')
-    //
-    //         // 2. 创建用户记录
-    //         const { error: dbError } = await supabase
-    //             .from('users')
-    //             .insert({
-    //                 user_id: authData.user.id,
-    //                 username,
-    //                 email,
-    //                 full_name: fullName,
-    //                 password_hash: password, // 注意：实际项目中应该使用proper hashing
-    //                 membership_type: 'regular'
-    //             })
-    //
-    //         if (dbError) {
-    //             // console.error('Database error:', dbError)
-    //             // 如果数据库插入失败，尝试删除auth用户
-    //             await supabase.auth.signOut()
-    //             // throw new Error('Failed to create user profile')
-    //             throw dbError
-    //         }
-    //
-    //         return authData
-    //     } catch (error) {
-    //         console.error('SignUp error:', error)
-    //         throw error
-    //     }
-    // }
-
 
     const signUp = async (email: string, password: string, username: string, fullName: string) => {
         try {

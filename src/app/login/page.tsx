@@ -24,15 +24,6 @@ export default function Login() {
         setError(null)
         setIsLoading(true)
 
-        // try {
-        //     await signIn(email, password)
-        //     router.push('/dashboard')
-        // } catch (_) {
-        //     setError('Invalid credentials. Please check your email and password.')
-        // } finally {
-        //     setIsLoading(false)
-        // }
-
         try {
             await signIn(email, password)
             router.push('/dashboard')
@@ -106,16 +97,6 @@ export default function Login() {
                 </CardContent>
                 <CardFooter>
                     <div className="w-full text-center">
-                        {/*<p className="text-sm text-muted-foreground">*/}
-                        {/*    Don't have an account?{' '}*/}
-                        {/*    <Link*/}
-                        {/*        href="/register"*/}
-                        {/*        className="text-primary hover:underline font-medium"*/}
-                        {/*    >*/}
-                        {/*        Create one now*/}
-                        {/*    </Link>*/}
-                        {/*</p>*/}
-
                         <p className="text-sm text-muted-foreground">
                             Don&apos;t have an account?{' '}
                             <Link

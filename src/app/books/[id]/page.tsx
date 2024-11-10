@@ -33,143 +33,6 @@ import { format } from 'date-fns'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 export default function BookDetails() {
-    // const [book, setBook] = useState<Book | null>(null)
-    // const [isLoading, setIsLoading] = useState(true)
-    // const [isBorrowing, setIsBorrowing] = useState(false)
-    // const [isReserving, setIsReserving] = useState(false)
-    // const params = useParams()
-    // const router = useRouter()
-    // const { user } = useAuth()
-    // const { toast } = useToast()
-    // const bookId = params.id as string
-    //
-    // const fetchBook = useCallback(async () => {
-    //     setIsLoading(true)
-    //     try {
-    //         const { data, error } = await supabase
-    //             .from('books')
-    //             .select(`
-    //                 *,
-    //                 categories(name)
-    //             `)
-    //             .eq('book_id', bookId)
-    //             .single()
-    //
-    //         if (error) {
-    //             toast({
-    //                 title: "Error",
-    //                 description: "Failed to fetch book details",
-    //                 variant: "destructive",
-    //             })
-    //             return
-    //         }
-    //         setBook(data)
-    //     } catch (_) {
-    //         toast({
-    //             title: "Error",
-    //             description: "Failed to fetch book details",
-    //             variant: "destructive",
-    //         })
-    //     } finally {
-    //         setIsLoading(false)
-    //     }
-    // }, [bookId, toast])
-    //
-    // useEffect(() => {
-    //     if (bookId) {
-    //         fetchBook()
-    //     }
-    // }, [bookId, fetchBook])
-    //
-    // const handleBorrow = async () => {
-    //     if (!user) {
-    //         router.push('/login')
-    //         return
-    //     }
-    //
-    //     setIsBorrowing(true)
-    //     try {
-    //         const dueDate = new Date()
-    //         dueDate.setDate(dueDate.getDate() + 14)
-    //
-    //         const { error: borrowError } = await supabase.rpc('borrow_book', {
-    //             p_user_id: user.id,
-    //             p_book_id: bookId,
-    //             p_due_date: dueDate.toISOString()
-    //         })
-    //
-    //         if (borrowError) {
-    //             toast({
-    //                 title: "Error",
-    //                 description: "Failed to borrow the book",
-    //                 variant: "destructive",
-    //             })
-    //             return
-    //         }
-    //
-    //         toast({
-    //             title: "Success",
-    //             description: "Book borrowed successfully",
-    //         })
-    //         fetchBook()
-    //     } catch (_) {
-    //         toast({
-    //             title: "Error",
-    //             description: "Failed to borrow the book",
-    //             variant: "destructive",
-    //         })
-    //     } finally {
-    //         setIsBorrowing(false)
-    //     }
-    // }
-    //
-    // const handleReserve = async () => {
-    //     if (!user) {
-    //         router.push('/login')
-    //         return
-    //     }
-    //
-    //     setIsReserving(true)
-    //     try {
-    //         const { error: reserveError } = await supabase.rpc('reserve_book', {
-    //             book_id: parseInt(bookId),
-    //             user_id: user.id
-    //         })
-    //
-    //         if (reserveError) {
-    //             toast({
-    //                 title: "Error",
-    //                 description: "Failed to reserve the book",
-    //                 variant: "destructive",
-    //             })
-    //             return
-    //         }
-    //
-    //         toast({
-    //             title: "Success",
-    //             description: "Book reserved successfully",
-    //         })
-    //         fetchBook()
-    //     } catch (_) {
-    //         toast({
-    //             title: "Error",
-    //             description: "Failed to reserve the book",
-    //             variant: "destructive",
-    //         })
-    //     } finally {
-    //         setIsReserving(false)
-    //     }
-    // }
-    //
-    // if (isLoading) {
-    //     return (
-    //         <div className="flex items-center justify-center min-h-[400px]">
-    //             <Loader2 className="h-8 w-8 animate-spin" />
-    //         </div>
-    //     )
-    // }
-
-
     const [book, setBook] = useState<Book | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [isBorrowing, setIsBorrowing] = useState(false)
@@ -259,32 +122,6 @@ export default function BookDetails() {
             const dueDate = new Date()
             dueDate.setDate(dueDate.getDate() + 14)
 
-
-            // const { error } = await supabase.rpc('borrow_book', {
-            //     p_user_id: user.id,
-            //     p_book_id: bookId,
-            //     p_due_date: dueDate.toISOString()
-            // })
-
-            // 调用存储过程前先检查参数类型
-            // const { error: borrowError } = await supabase.rpc('borrow_book', {
-            //     p_user_id: user.id,
-            //     p_book_id: bookId,
-            //     p_due_date: dueDate.toISOString()
-            // })
-
-
-            // 直接插入到loans表而不是使用RPC
-            // const { error: borrowError } = await supabase
-            //     .from('loans')
-            //     .insert({
-            //         user_id: user.id,
-            //         book_id: bookId,
-            //         due_date: dueDate.toISOString(),
-            //         checkout_date: new Date().toISOString(),
-            //         status: 'borrowed'
-            //     })
-
             const { data: loanData, error: loanError } = await supabase
                 .from('loans')
                 .insert([
@@ -339,77 +176,6 @@ export default function BookDetails() {
                 description: "Book borrowed successfully",
             })
 
-            // if (error) {
-            //     console.error('Borrow error:', error)
-            //     toast({
-            //         title: "Error",
-            //         description: "Failed to borrow the book",
-            //         variant: "destructive",
-            //     })
-            //     return
-            // }
-
-            // if (borrowError) {
-            //     console.error('Borrow error:', borrowError)
-            //     let errorMessage = "Failed to borrow the book"
-            //     if (borrowError.message) {
-            //         errorMessage += `: ${borrowError.message}`
-            //     }
-            //     toast({
-            //         title: "Error",
-            //         description: errorMessage,
-            //         variant: "destructive",
-            //     })
-            //     return
-            // }
-            //
-            // // 更新书籍的可用副本数
-            // const { error: updateError } = await supabase
-            //     .from('books')
-            //     .update({
-            //         available_copies: book.available_copies - 1
-            //     })
-            //     .eq('book_id', bookId)
-            //
-            // if (updateError) {
-            //     console.error('Update error:', updateError)
-            //     // 如果更新失败，回滚借书操作
-            //     await supabase
-            //         .from('loans')
-            //         .delete()
-            //         .eq('book_id', bookId)
-            //         .eq('user_id', user.id)
-            //         .eq('status', 'borrowed')
-            //
-            //     toast({
-            //         title: "Error",
-            //         description: "Failed to update book availability",
-            //         variant: "destructive",
-            //     })
-            //     return
-            // }
-            //
-            //
-            //
-            // toast({
-            //     title: "Success",
-            //     description: "Book borrowed successfully",
-            // })
-
-
-    //         fetchBook()
-    //     } catch (error) {
-    //         console.error('Borrow error:', error)
-    //         toast({
-    //             title: "Error",
-    //             description: "Failed to borrow the book",
-    //             variant: "destructive",
-    //         })
-    //     } finally {
-    //         setIsBorrowing(false)
-    //     }
-    // }
-
             await fetchBook() // 重新获取图书信息以更新可用副本数
         } catch (error) {
             console.error('Borrow error:', error)
@@ -440,12 +206,6 @@ export default function BookDetails() {
 
         setIsReserving(true)
         try {
-            // const { error } = await supabase.rpc('reserve_book', {
-            //     book_id: parseInt(bookId),
-            //     user_id: user.id
-            // })
-
-
             // 确保转换为数字类型
             const numericBookId = parseInt(bookId, 10)
             if (isNaN(numericBookId)) {
@@ -456,16 +216,6 @@ export default function BookDetails() {
                 book_id: numericBookId,
                 user_id: user.id
             })
-
-            // if (error) {
-            //     console.error('Reserve error:', error);
-            //     toast({
-            //         title: "Error",
-            //         description: "Failed to reserve the book",
-            //         variant: "destructive",
-            //     })
-            //     return
-            // }
 
             if (reserveError) {
                 console.error('Reserve error:', reserveError)
@@ -486,21 +236,6 @@ export default function BookDetails() {
                 description: "Book reserved successfully",
             })
 
-
-
-    //         fetchBook()
-    //     } catch (error) {
-    //         console.error('Reserve error:', error);
-    //         toast({
-    //             title: "Error",
-    //             description: "Failed to reserve the book",
-    //             variant: "destructive",
-    //         })
-    //     } finally {
-    //         setIsReserving(false)
-    //     }
-    // }
-
             await fetchBook()
         } catch (error) {
             console.error('Reserve error:', error)
@@ -514,14 +249,6 @@ export default function BookDetails() {
         }
     }
 
-
-
-
-
-
-
-
-
     if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
@@ -529,8 +256,6 @@ export default function BookDetails() {
             </div>
         )
     }
-
-
 
     if (!book) {
         return (

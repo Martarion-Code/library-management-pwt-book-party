@@ -9,6 +9,19 @@
 
 A modern web-based library management system that helps libraries manage their collections and allows users to browse, borrow, and reserve books efficiently. Built with Next.js 15, TypeScript, and Supabase, featuring a clean and responsive UI powered by shadcn/ui components.
 
+![屏幕截图_11-11-2024_17212_localhost](https://github.com/user-attachments/assets/70bd5184-9eb6-4670-b3de-5a4002c34a46)
+
+![屏幕截图_11-11-2024_1733_localhost](https://github.com/user-attachments/assets/54da54eb-a64d-4f93-b69a-b36349c77a43)
+
+![屏幕截图_11-11-2024_17321_localhost](https://github.com/user-attachments/assets/a0313675-7dd5-4a3b-911e-9df6e05aee32)
+
+![屏幕截图_11-11-2024_17342_localhost](https://github.com/user-attachments/assets/dc8b1980-44a4-4b59-9f6d-c92f60016a0c)
+
+![屏幕截图_11-11-2024_1747_localhost](https://github.com/user-attachments/assets/c67b34d7-b771-4b86-b43a-68704cec7acb)
+
+![屏幕截图_11-11-2024_17355_localhost](https://github.com/user-attachments/assets/dea6bc1e-41e4-413e-b614-f6562413a97e)
+
+
 ## ✨ Features
 
 ### 📚 Book Management
@@ -116,7 +129,7 @@ Please ensure you follow our coding standards and include appropriate tests.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+See the [AGPL-3.0 license](LICENSE) file for details.
 
 ## 👤 Author
 

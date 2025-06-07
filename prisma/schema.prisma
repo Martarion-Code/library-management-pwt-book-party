@@ -1,0 +1,86 @@
+// prisma/schema.prisma
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Existing Models
+model User {
+  id           String         @id @default(uuid())
+  email        String         @unique
+  password     String
+  name         String?
+  role         String         @default("user")
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  loans        loans[]        @relation("UserLoans") // Explicit relation name
+  reservations reservations[] @relation("UserReservations") // Explicit relation name
+}
+
+model Book {
+  id            String    @id @default(uuid())
+  title         String
+  author        String
+  isbn          String    @unique
+  categoryId    String
+  description   String?
+  coverImageUrl String?
+  totalCopies   Int       @default(1)
+  availableCopies Int     @default(1)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  category      Category  @relation(fields: [categoryId], references: [id])
+  loans         loans[]   @relation("BookLoans") // Explicit relation name
+  reservations  reservations[] @relation("BookReservations") // Explicit relation name
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  books     Book[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+// New Models and Enum
+enum LoanStatus {
+  BORROWED
+  RETURNED
+}
+
+model loans { // Model name is 'loans' (lowercase plural)
+  loan_id     String     @id @default(uuid()) @map("id")
+  user_id     String     @map("userId")
+  book_id     String     @map("bookId")
+  status      LoanStatus @default(BORROWED)
+  borrowed_at DateTime   @default(now()) @map("borrowedAt") @db.Timestamptz(3)
+  due_date    DateTime   @map("dueDate") @db.Timestamptz(3)
+  returned_at DateTime?  @map("returnedAt") @db.Timestamptz(3)
+  created_at  DateTime   @default(now()) @map("createdAt") @db.Timestamptz(3)
+  updated_at  DateTime   @updatedAt @map("updatedAt") @db.Timestamptz(3)
+
+  // Define relations with explicit names matching the inverse side
+  user User @relation("UserLoans", fields: [user_id], references: [id])
+  book Book @relation("BookLoans", fields: [book_id], references: [id])
+}
+
+model reservations { // Model name is 'reservations' (lowercase plural)
+  reservation_id String    @id @default(uuid()) @map("id")
+  user_id        String    @map("userId")
+  book_id        String    @map("bookId")
+  reserved_at    DateTime  @default(now()) @map("reservedAt") @db.Timestamptz(3)
+  status         String    @default("PENDING")
+  created_at     DateTime  @default(now()) @map("createdAt") @db.Timestamptz(3)
+  updated_at     DateTime  @updatedAt @map("updatedAt") @db.Timestamptz(3)
+
+  // Define relations with explicit names matching the inverse side
+  user User @relation("UserReservations", fields: [user_id], references: [id])
+  book Book @relation("BookReservations", fields: [book_id], references: [id])
+}
+
+

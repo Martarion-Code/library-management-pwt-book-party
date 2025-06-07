@@ -3,11 +3,11 @@
  <img src="https://img.shields.io/badge/Next.js-15.0.2-black"/>
  <img src="https://img.shields.io/badge/TypeScript-5.0.0-blue"/>
  <img src="https://img.shields.io/badge/License-MIT-green"/>
- <img src="https://img.shields.io/badge/Supabase-2.46.0-darkgreen"/>
+ <img src="https://img.shields.io/badge/Prisma-6.9.0-lightgrey"/>
  <img src="https://img.shields.io/badge/React-18.3.1-61DAFB"/>
 </div>
 
-A modern web-based library management system that helps libraries manage their collections and allows users to browse, borrow, and reserve books efficiently. Built with Next.js 15, TypeScript, and Supabase, featuring a clean and responsive UI powered by shadcn/ui components.
+A modern web-based library management system that helps libraries manage their collections and allows users to browse, borrow, and reserve books efficiently. Built with Next.js 15, TypeScript, and Prisma with PostgreSQL, featuring a clean and responsive UI powered by shadcn/ui components.
 
 ![屏幕截图_11-11-2024_17212_localhost](https://github.com/user-attachments/assets/70bd5184-9eb6-4670-b3de-5a4002c34a46)
 
@@ -32,7 +32,7 @@ A modern web-based library management system that helps libraries manage their c
 - Detailed book information pages
 
 ### 🔒 Security & Authentication
-- Secure email/password authentication via Supabase
+- Secure JWT-based authentication
 - Role-based access control
 - Protected routes and API endpoints
 - User profile management
@@ -63,7 +63,7 @@ A modern web-based library management system that helps libraries manage their c
 ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
 ### Backend & Database
-![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-3982CE?style=for-the-badge&logo=Prisma&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/postgresql-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)
 
 ### Tools & Utilities
@@ -88,10 +88,10 @@ npm install
 ```
 
 3. **Set up environment variables**
-Create a `.env.local` file in the root directory:
+Create a `.env` file in the root directory:
 ```
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+DATABASE_URL=your-postgresql-url
+JWT_SECRET=your-jwt-secret
 ```
 
 4. **Run the development server**

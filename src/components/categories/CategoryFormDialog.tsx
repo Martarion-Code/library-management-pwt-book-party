@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { Category } from '@/types/category'
-import { supabase } from '@/lib/supabase-client'
 import {
     Dialog,
     DialogContent,
@@ -44,23 +43,24 @@ export default function CategoryFormDialog({
         setIsSubmitting(true)
 
         try {
-            if (category) {
-                const { error } = await supabase
-                    .from('categories')
-                    .update({ name })
-                    .eq('category_id', category.category_id)
+            const url = category ? `/api/categories/${category.id}` : '/api/categories'
+            const method = category ? 'PUT' : 'POST'
 
-                if (error) throw error
-            } else {
-                const { error } = await supabase.from('categories').insert({ name })
-                if (error) throw error
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name }),
+            })
+
+            if (!response.ok) {
+                throw new Error('Failed to save category')
             }
 
             toast({
                 title: 'Success',
-                description: category
-                    ? 'Category updated successfully'
-                    : 'Category created successfully',
+                description: `Category ${category ? 'updated' : 'created'} successfully`,
             })
             onSuccess()
         } catch (error) {
@@ -80,7 +80,7 @@ export default function CategoryFormDialog({
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>
-                        {category ? 'Edit Category' : 'Add New Category'}
+                        {category ? 'Edit Category' : 'Create Category'}
                     </DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -94,7 +94,12 @@ export default function CategoryFormDialog({
                         />
                     </div>
                     <div className="flex justify-end space-x-2">
-                        <Button type="button" variant="outline" onClick={onClose}>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onClose}
+                            disabled={isSubmitting}
+                        >
                             Cancel
                         </Button>
                         <Button type="submit" disabled={isSubmitting}>
@@ -102,7 +107,7 @@ export default function CategoryFormDialog({
                                 ? 'Saving...'
                                 : category
                                 ? 'Update Category'
-                                : 'Add Category'}
+                                : 'Create Category'}
                         </Button>
                     </div>
                 </form>

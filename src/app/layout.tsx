@@ -5,8 +5,6 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
-import { supabase } from "@/lib/supabase-client";
-import { useEffect } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 

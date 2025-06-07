@@ -1,5 +1,9 @@
-export interface Category {
-    category_id: number;
-    name: string;
-    created_at?: string;
-}
+export type Category = {
+  id: string;
+  name: string;
+  createdAt: Date;
+  updatedAt: Date;
+  _count?: {
+    books: number;
+  };
+};

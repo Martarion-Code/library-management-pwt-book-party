@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '@/lib/supabase-client'
 import { Book } from '@/types/book'
 import BookCard from '@/components/books/BookCard'
 import SearchFilters from '@/components/books/SearchFilters'
@@ -10,9 +9,10 @@ import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface Category {
-    id: number;
+    id: string;
     name: string;
 }
+
 export default function BookCatalog() {
     const [books, setBooks] = useState<Book[]>([])
     const [categories, setCategories] = useState<Category[]>([])
@@ -25,13 +25,9 @@ export default function BookCatalog() {
 
     const fetchCategories = useCallback(async () => {
         try {
-            const { data, error } = await supabase
-                .from('categories')
-                .select('name, category_id')
-                .order('name', { ascending: true })
-
-            if (error) throw error
-            setCategories(data.map(category => ({id: category.category_id, name: category.name })))
+            const response = await fetch('/api/categories')
+            const data = await response.json()
+            setCategories(data)
         } catch (error) {
             console.error('Error fetching categories:', error)
         }
@@ -40,26 +36,18 @@ export default function BookCatalog() {
     const fetchBooks = useCallback(async () => {
         setIsLoading(true)
         try {
-            let query = supabase
-                .from('books')
-                .select('*', { count: 'exact' })
-                .order('title', { ascending: true })
-                .range((currentPage - 1) * booksPerPage, currentPage * booksPerPage - 1)
+            const searchParams = new URLSearchParams({
+                page: currentPage.toString(),
+                limit: booksPerPage.toString(),
+                search: searchTerm,
+                category: selectedCategory !== 'all' ? selectedCategory : ''
+            })
 
-            if (searchTerm) {
-                query = query.ilike('title', `%${searchTerm}%`)
-            }
-
-            if (selectedCategory && selectedCategory !== 'all') {
-                query = query.eq('category_id', selectedCategory)
-            }
-
-            const { data, error, count } = await query
-
-            if (error) throw error
-
-            setBooks(data as Book[])
-            setTotalPages(Math.ceil((count || 0) / booksPerPage))
+            const response = await fetch(`/api/books?${searchParams}`)
+            const data = await response.json()
+            
+            setBooks(data.books)
+            setTotalPages(Math.ceil(data.total / booksPerPage))
         } catch (error) {
             console.error('Error fetching books:', error)
         } finally {
@@ -124,7 +112,7 @@ export default function BookCatalog() {
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                             {books.map((book) => (
-                                <BookCard key={book.book_id} book={book} />
+                                <BookCard key={book.id} book={book} />
                             ))}
                         </div>
                     )}

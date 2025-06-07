@@ -5,7 +5,6 @@ import {
     TableCell,
     TableHead,
     TableHeader,
-
     TableRow,
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -16,7 +15,7 @@ interface BookListProps {
     books: Book[]
     isLoading: boolean
     onEdit: (book: Book) => void
-    onDelete: (bookId: number) => void
+    onDelete: (bookId: string) => void
 }
 
 export default function BookListTable({
@@ -28,7 +27,7 @@ export default function BookListTable({
     if (isLoading) {
         return <div>Loading...</div>
     }
-
+    console.log(books)
 
     return (
         <Table>
@@ -46,12 +45,12 @@ export default function BookListTable({
             </TableHeader>
             <TableBody>
                 {books.map((book) => (
-                    <TableRow key={book.book_id}>
-                           <TableCell>
+                    <TableRow key={book.id}>
+                        <TableCell>
                             <div className="relative h-16 w-12">
-                                {book.cover_image_url ? (
+                                {book.coverImageUrl ? (
                                     <Image
-                                        src={book.cover_image_url}
+                                        src={book.coverImageUrl}
                                         alt={book.title}
                                         fill
                                         className="object-cover rounded-sm"
@@ -67,11 +66,11 @@ export default function BookListTable({
                         </TableCell>
                         <TableCell>{book.title}</TableCell>
                         <TableCell>{book.author}</TableCell>
-                        <TableCell>{book.categories.name}</TableCell>
+                        <TableCell>{book.category?.name}</TableCell>
                         <TableCell>{book.isbn}</TableCell>
-                        <TableCell>{book.total_copies}</TableCell>
-                        <TableCell>{book.available_copies}</TableCell>
-                        <TableCell className="space-x-2 ">
+                        <TableCell>{book.totalCopies}</TableCell>
+                        <TableCell>{book.availableCopies}</TableCell>
+                        <TableCell className="space-x-2">
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -82,7 +81,7 @@ export default function BookListTable({
                             <Button
                                 variant="destructive"
                                 size="sm"
-                                onClick={() => onDelete(book.book_id)}
+                                onClick={() => onDelete(book.id)}
                             >
                                 <Trash2 className="h-4 w-4" />
                             </Button>

@@ -8,13 +8,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, Filter } from "lucide-react";
+import { Category } from "@/types/database";
 
 type SearchFiltersProps = {
   searchTerm: string;
   onSearchChange: (value: string) => void;
   selectedCategory: string;
   onCategoryChange: (value: string) => void;
-  categories: string[];
+  categories: Category[];
 };
 
 export default function SearchFilters({

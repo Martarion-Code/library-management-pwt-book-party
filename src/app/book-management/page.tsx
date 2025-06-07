@@ -1,129 +1,145 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/lib/supabase-client";
-import { Book } from "@/types/book";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Book } from "@/types/database";
 import BookListTable from "@/components/books/BookListTable";
 import BookFormDialog from "@/components/books/BookFormDialog";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { Plus } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
-export default function AdminBookPage() {
+export default function BookManagementPage() {
   const [books, setBooks] = useState<Book[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingBook, setEditingBook] = useState<Book | null>(null);
-  const [warningDialogOpen, setWarningDialogOpen] = useState(false);
-  const [warningMessage, setWarningMessage] = useState("");
-  const fetchBooks = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("books")
-        .select(
-          `
-          *,
-          categories:category_id (
-            category_id,
-            name
-          )
-        `
-        )
-        .order("title", { ascending: true });
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  const { toast } = useToast();
+  const { user, loading: userLoading } = useAuth();
+  const router = useRouter();
 
-      if (error) throw error;
-      if (Array.isArray(data)) {
-        setBooks(data as Book[]);
-      } else {
-        setBooks([]);
+  const fetchBooks = async () => {
+    console.log("user", user)
+    try {
+      if (!user) {
+        // router.push("/login");
+        return;
+      } else if (user?.role !== "admin") {
+        // router.push("/dashboard");
+        return;
       }
+      const response = await fetch("/api/books");
+      const data = await response.json();
+      setBooks(data.books || []);
     } catch (error) {
       console.error("Error fetching books:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch books",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
-  }, []);
-
-  
+  };
 
   useEffect(() => {
     fetchBooks();
-  }, [fetchBooks]);
+  }, [user]);
 
-  const handleAddBook = () => {
-    setEditingBook(null);
-    setIsFormOpen(true);
-  };
-
-  const handleEditBook = (book: Book) => {
-    setEditingBook(book);
-    setIsFormOpen(true);
-  };
-
-  const handleDeleteBook = async (bookId: number) => {
-    if (!window.confirm("Are you sure you want to delete this book?")) return;
-
-    const { data, error } = await supabase
-      .from("loans") // Ganti sesuai nama tabel peminjaman kamu
-      .select("loan_id")
-      .eq("book_id", bookId)
-      .eq("status", "borrowed") // Misal: status = "borrowed" menandakan masih dipinjam
-      .maybeSingle();
-
-    if (error) {
-      console.error("Error checking borrowing status:", error);
-      setWarningMessage("Terjadi kesalahan saat mengecek status peminjaman.");
-      setWarningDialogOpen(true);
+  useEffect(() => {
+    if (userLoading) return;
+    if (!user) {
+      router.push("/login");
+      return;
+    } else if (user?.role !== "admin") {
+      router.push("/dashboard");
       return;
     }
+  }, [user, userLoading]);
 
-    if (data) {
-      // Masih dipinjam
-      setWarningMessage("Buku ini masih dipinjam dan tidak bisa dihapus.");
-      setWarningDialogOpen(true);
-    } else {
-      // Aman untuk dihapus
-      // onDelete(bookId);
-      try {
-        const { error } = await supabase
-          .from("books")
-          .delete()
-          .eq("book_id", bookId);
+  const handleAddClick = () => {
+    setSelectedBook(null);
+    setIsDialogOpen(true);
+  };
 
-        if (error) throw error;
-        fetchBooks();
-      } catch (error) {
-        console.error("Error deleting book:", error);
+  const handleEditClick = (book: Book) => {
+    setSelectedBook(book);
+    setIsDialogOpen(true);
+  };
+
+  const handleDeleteClick = async (bookId: string) => {
+    if (!confirm("Are you sure you want to delete this book?")) return;
+
+    try {
+      const response = await fetch(`/api/books/${bookId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete book");
       }
+
+      await fetchBooks();
+      toast({
+        title: "Success",
+        description: "Book deleted successfully",
+      });
+    } catch (error) {
+      console.error("Error deleting book:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete book",
+        variant: "destructive",
+      });
     }
   };
-  console.log(books);
+
+  const handleDialogClose = () => {
+    setIsDialogOpen(false);
+    setSelectedBook(null);
+  };
+
+  const handleSuccess = () => {
+    fetchBooks();
+    handleDialogClose();
+  };
+
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Manage Books</h1>
-        <Button onClick={handleAddBook}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Book
-        </Button>
-      </div>
+    <div className="container mx-auto py-8">
+      {user && user?.role == "admin" ? (
+        <>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold">Book Management</h1>
+            <Button onClick={handleAddClick}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Book
+            </Button>
+          </div>
 
-      <BookListTable
-        books={books}
-        isLoading={isLoading}
-        onEdit={handleEditBook}
-        onDelete={handleDeleteBook}
-      />
+          <BookListTable
+            books={books}
+            isLoading={isLoading}
+            onEdit={handleEditClick}
+            onDelete={handleDeleteClick}
+          />
 
-      <BookFormDialog
-        open={isFormOpen}
-        book={editingBook}
-        onClose={() => setIsFormOpen(false)}
-        onSuccess={() => {
-          setIsFormOpen(false);
-          fetchBooks();
-        }}
-      />
+          <BookFormDialog
+            open={isDialogOpen}
+            book={selectedBook}
+            onClose={handleDialogClose}
+            onSuccess={handleSuccess}
+          />
+        </>
+      ) : (
+        <div className="text-center">
+          {/* <h1 className="text-3xl font-bold">Please login to access this page</h1>
+          <Link href="/login">
+            <a className="text-blue-500 hover:underline">Login</a>
+          </Link> */}
+        </div>
+      )}
     </div>
   );
 }

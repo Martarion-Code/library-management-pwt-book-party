@@ -5,12 +5,11 @@ const nextConfig = {
     },
     typescript: {
         ignoreBuildErrors: true,
-    },
-     images: {
+    },     images: {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "pzbozvzqeetsozeyfepy.supabase.co",
+        hostname: "**",
         port: "",
       },
     ],

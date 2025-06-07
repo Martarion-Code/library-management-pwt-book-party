@@ -10,7 +10,7 @@
     "@typescript-eslint/no-empty-interface": "off",
     "no-unused-vars": "off"
   },
-  "ignorePatterns": ["src/types/supabase.ts"],
+  "ignorePatterns": [],
   "parserOptions": {
     "project": "./tsconfig.json"
   }

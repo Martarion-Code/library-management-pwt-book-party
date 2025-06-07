@@ -4,7 +4,5 @@
   "framework": "nextjs",
   "ignoreCommand": "",
   "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "https://pzbozvzqeetsozeyfepy.supabase.co",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6Ym96dnpxZWV0c296ZXlmZXB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxNjkzMDMsImV4cCI6MjA2NDc0NTMwM30.hGfgYyBywON-8gJPGMYDvdikXwTYAqvql-AZjUNIOW4"
   }
 }

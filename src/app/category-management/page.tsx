@@ -1,134 +1,137 @@
-'use client'
+"use client";
 
-import { useState, useCallback, useEffect } from 'react'
-import { supabase } from '@/lib/supabase-client'
-import { Category } from '@/types/category'
-import CategoryFormDialog from '@/components/categories/CategoryFormDialog'
-import { Button } from '@/components/ui/button'
-import { Plus } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
-import CategoryListTable from '@/components/categories/CategoryList'
+import { useState, useEffect } from "react";
+import { Category } from "@/types/database";
+import CategoryList from "@/components/categories/CategoryList";
+import CategoryFormDialog from "@/components/categories/CategoryFormDialog";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
-export default function CategoryManagement() {
-    const [categories, setCategories] = useState<Category[]>([])
-    const [isLoading, setIsLoading] = useState(true)
-    const [isFormOpen, setIsFormOpen] = useState(false)
-    const [editingCategory, setEditingCategory] = useState<Category | null>(null)
-    const { toast } = useToast()
-
-    const fetchCategories = useCallback(async () => {
-        setIsLoading(true)
-        try {
-            const { data, error } = await supabase
-                .from('categories')
-                .select('*')
-                .order('name', { ascending: true })
-
-            if (error) throw error
-            setCategories(data || [])
-        } catch (error) {
-            console.error('Error fetching categories:', error)
-            toast({
-                title: 'Error',
-                description: 'Failed to fetch categories',
-                variant: 'destructive',
-            })
-        } finally {
-            setIsLoading(false)
-        }
-    }, [toast])
-
-    useEffect(() => {
-        fetchCategories()
-    }, [fetchCategories])
-
-    const handleAddCategory = () => {
-        setEditingCategory(null)
-        setIsFormOpen(true)
+export default function CategoryManagementPage() {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+    null
+  );
+  const { toast } = useToast();
+  const { user, loading: userLoading } = useAuth();
+  const router = useRouter();
+  const fetchCategories = async () => {
+    try {
+      if (!user) {
+        // router.push("/login");
+        return;
+      } else if (user?.role !== "admin") {
+        // router.push("/dashboard");
+        return;
+      }
+      const response = await fetch("/api/categories");
+      const data = await response.json();
+      setCategories(data);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch categories",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    const handleEditCategory = (category: Category) => {
-        setEditingCategory(category)
-        setIsFormOpen(true)
+  useEffect(() => {
+    fetchCategories();
+  }, [user]);
+
+  useEffect(() => {
+    if (userLoading) return;
+    if (!user) {
+      router.push("/login");
+      return;
+    } else if (user?.role !== "admin") {
+      router.push("/dashboard");
+      return;
     }
+  }, [user, userLoading]);
 
-    const handleDeleteCategory = async (categoryId: number) => {
-        // Check if category is being used by any books
-        const { data: books, error: checkError } = await supabase
-            .from('books')
-            .select('book_id')
-            .eq('category_id', categoryId)
-            .limit(1)
+  const handleAddClick = () => {
+    setSelectedCategory(null);
+    setIsDialogOpen(true);
+  };
 
-        if (checkError) {
-            toast({
-                title: 'Error',
-                description: 'Failed to check category usage',
-                variant: 'destructive',
-            })
-            return
-        }
+  const handleEditClick = (category: Category) => {
+    setSelectedCategory(category);
+    setIsDialogOpen(true);
+  };
 
-        if (books && books.length > 0) {
-            toast({
-                title: 'Cannot Delete',
-                description: 'This category is being used by one or more books',
-                variant: 'destructive',
-            })
-            return
-        }
+  const handleDeleteClick = async (categoryId: string) => {
+    try {
+      const response = await fetch(`/api/categories/${categoryId}`, {
+        method: "DELETE",
+      });
 
-        if (!window.confirm('Are you sure you want to delete this category?')) return
+      if (!response.ok) {
+        throw new Error("Failed to delete category");
+      }
 
-        try {
-            const { error } = await supabase
-                .from('categories')
-                .delete()
-                .eq('category_id', categoryId)
-
-            if (error) throw error
-
-            toast({
-                title: 'Success',
-                description: 'Category deleted successfully',
-            })
-            fetchCategories()
-        } catch (error) {
-            console.error('Error deleting category:', error)
-            toast({
-                title: 'Error',
-                description: 'Failed to delete category',
-                variant: 'destructive',
-            })
-        }
+      await fetchCategories();
+      toast({
+        title: "Success",
+        description: "Category deleted successfully",
+      });
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete category",
+        variant: "destructive",
+      });
     }
+  };
 
-    return (
-        <div className="space-y-6 p-6">
-            <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold">Manage Categories</h1>
-                <Button onClick={handleAddCategory}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Category
-                </Button>
-            </div>
+  const handleDialogClose = () => {
+    setIsDialogOpen(false);
+    setSelectedCategory(null);
+  };
 
-            <CategoryListTable
-                categories={categories}
-                isLoading={isLoading}
-                onEdit={handleEditCategory}
-                onDelete={handleDeleteCategory}
-            />
+  const handleSuccess = () => {
+    fetchCategories();
+    handleDialogClose();
+  };
 
-            <CategoryFormDialog
-                open={isFormOpen}
-                category={editingCategory}
-                onClose={() => setIsFormOpen(false)}
-                onSuccess={() => {
-                    setIsFormOpen(false)
-                    fetchCategories()
-                }}
-            />
-        </div>
-    )
+  return (
+    <div className="container mx-auto py-8">
+      {user && user.role == "admin" ? (
+        <>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold">Category Management</h1>
+            <Button onClick={handleAddClick}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Category
+            </Button>
+          </div>
+          <CategoryList
+            categories={categories}
+            isLoading={isLoading}
+            onEdit={handleEditClick}
+            onDelete={handleDeleteClick}
+          />
+
+          <CategoryFormDialog
+            open={isDialogOpen}
+            category={selectedCategory}
+            onClose={handleDialogClose}
+            onSuccess={handleSuccess}
+          />
+        </>
+      ) : (
+        <></>
+      )}
+    </div>
+  );
 }

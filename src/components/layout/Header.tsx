@@ -5,8 +5,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { BookOpenCheck, UserCircle } from "lucide-react";
 import { useEffect } from "react";
-import { supabase } from "@/lib/supabase-client";
-const KEEPALIVE_INTERVAL = 5000; // 45 seconds
 
 export default function Header() {
   const { user, signOut } = useAuth();
@@ -34,12 +32,12 @@ export default function Header() {
                 Dashboard
               </a>
             )}
-            {user && (
+            {user  && user.role === "admin" &&(
               <a href="/book-management" className="nav-link">
                 Book Management
               </a>
             )}
-            {user && (
+            {user && user.role === "admin" && (
               <a href="/category-management" className="nav-link">
                 Category Management
               </a>

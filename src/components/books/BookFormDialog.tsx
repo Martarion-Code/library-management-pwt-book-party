@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Book } from "@/types/book";
-import { supabase } from "@/lib/supabase-client";
+import { toast, useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+
+import { useEffect, useState } from "react";
+import { Book } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -50,18 +51,18 @@ export default function BookFormDialog({
     { label: string; value: string }[]
   >([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   useEffect(() => {
+    console.log('book', book)
     if (book) {
       setFormData({
         title: book.title,
         author: book.author,
         isbn: book.isbn,
-        category_id: book.category_id,
+        category_id: book.categoryId,
         description: book.description || "",
-        cover_image_url: book.cover_image_url || "",
-        total_copies: book.total_copies || 0,
-        available_copies: book.available_copies || 0,
+        cover_image_url: book.coverImageUrl || "",
+        total_copies: book.totalCopies || 0,
+        available_copies: book.availableCopies || 0,
       });
     } else {
       setFormData({
@@ -81,45 +82,48 @@ export default function BookFormDialog({
 
 
 
-  const handleImageUpload = async (file: File) => {
+   const handleImageUpload = async (file: File) => {
+    setIsSubmitting(true); // Indicate loading for image upload
     try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${uuidv4()}.${fileExt}`;
-      const filePath = `book-covers/${fileName}`;
+      const form = new FormData();
+      form.append('file', file); // Append the file
+      
+      // Send the file to your new API route
+      const response = await fetch(`/api/upload-image?filename=${uuidv4()}-${file.name}`, {
+        method: 'POST',
+        body: file, // Send the file directly as body
+        // No Content-Type header needed for file uploads, browser sets it
+      });
 
-      // Upload image to Supabase Storage
-      const { error: uploadError, data } = await supabase.storage
-        .from("images")
-        .upload(filePath, file);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Image upload failed.');
+      }
 
-      if (uploadError) throw uploadError;
-
-      // Get public URL
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("images").getPublicUrl(filePath);
-
+      const { url } = await response.json();
       setFormData((prev) => ({
         ...prev,
-        cover_image_url: publicUrl,
+        cover_image_url: url, // Update with the Vercel Blob URL
       }));
+      toast({ title: 'Success', description: 'Image uploaded successfully!' });
     } catch (error) {
       console.error("Error uploading image:", error);
+      toast({ title: 'Error', description: `Image upload failed: ${error instanceof Error ? error.message : 'An unexpected error occurred'}` });
+    } finally {
+      setIsSubmitting(false); // Reset loading state
     }
   };
 
   useEffect(() => {
     const fetchCategories = async () => {
-      const { data, error } = await supabase
-        .from("categories")
-        .select("name, category_id")
-        .order("name");
-      if (!error && data) {
-        console.log(data);
+      const response = await fetch('/api/categories');
+      const data = await response.json();
+      if (data) {
         setCategories(
-          data.map((cat) => {
-            return { label: cat.name, value: cat.category_id };
-          })
+          data.map((cat: any) => ({
+            label: cat.name,
+            value: cat.id
+          }))
         );
       }
     };
@@ -131,20 +135,30 @@ export default function BookFormDialog({
     setIsSubmitting(true);
 
     try {
-      console.log("Updating book:");
       if (book) {
-        const { error } = await supabase
-          .from("books")
-          .update(formData)
-          .eq("book_id", book.book_id);
-        if (error) throw error;
+        const response = await fetch(`/api/books/${book.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...formData,
+            categoryId: formData.category_id
+          }),
+        });
+        if (!response.ok) throw new Error('Failed to update book');
       } else {
-        
-        const { error } = await supabase
-          .from("books")
-          .insert({ ...formData, category_id: Number(formData.category_id) });
-          console.log('aa', error)
-        if (error) throw error;
+        const response = await fetch('/api/books', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...formData,
+            categoryId: formData.category_id
+          }),
+        });
+        if (!response.ok) throw new Error('Failed to create book');
       }
       onSuccess();
     } catch (error) {

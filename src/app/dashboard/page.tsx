@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase-client";
+import { prisma } from "@/lib/prisma";
 import {
   Card,
   CardContent,
@@ -37,17 +37,21 @@ import type { DashboardStats, BorrowedBook } from "@/types/dashboard";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const calculateProgress = (borrowed: number, total: number) => {
   return total > 0 ? (borrowed / total) * 100 : 0;
 };
 
-export default function Dashboard() {
-  // Add a listener for auth state changes
-  const { user, loading: userLoading } = useAuth();
-  console.log("user", user);
+interface DashboardData {
+  totalBooks: number;
+  availableBooks: number;
+  totalCategories: number;
+  totalUsers: number;
+}
 
-  console.log("loading", userLoading);
+export default function Dashboard() {
+  const { user, loading: userLoading } = useAuth();
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats>({
     totalbooks: 0,
@@ -57,142 +61,79 @@ export default function Dashboard() {
   const [borrowedBooks, setBorrowedBooks] = useState<BorrowedBook[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isReturning, setIsReturning] = useState<string | null>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
+    null
+  );
   const { toast } = useToast();
 
-  const fetchDashboardData = useCallback(async () => {
-    if (!user) {
-      console.log("No user found");
-      return;
-    }
-    console.log("Fetching data for user:", user.id);
+ const fetchDashboardData = useCallback(async () => {
+        // Ensure user data is available before fetching user-specific dashboard data
+        if (!user || userLoading) {
+            console.log("User not loaded or not authenticated, skipping dashboard data fetch.");
+            return;
+        }
 
-    setIsLoading(true);
-    try {
-      // 获取总书籍数
-      const { count: totalBooks } = await supabase
-        .from("books")
-        .select("*", { count: "exact" });
-      console.log("Total books:", totalBooks);
-      // 获取当前借阅数
-      const { data: borrowedData, count: borrowedCount } = await supabase
-        .from("loans")
-        .select("*", { count: "exact" })
-        .eq("user_id", user.id)
-        .eq("status", "borrowed");
+        setIsLoading(true);
+        try {
+            // Fetch dashboard stats from API route
+            const statsResponse = await fetch(`/api/dashboard?userId=${user.id}`);
+            if (!statsResponse.ok) {
+                const errorData = await statsResponse.json();
+                throw new Error(errorData.message || 'Failed to fetch dashboard stats');
+            }
+            const statsData: DashboardStats = await statsResponse.json();
+            setStats(statsData);
+            // Update dashboardData with overall library stats, e.g., totalBooks
+            setDashboardData({ totalBooks: statsData.totalbooks });
 
-      // 获取逾期数
-      const { count: overdueCount } = await supabase
-        .from("loans")
-        .select("*", { count: "exact" })
-        .eq("user_id", user.id)
-        .eq("status", "borrowed")
-        .lt("due_date", new Date().toISOString());
 
-      console.log("Stats:", {
-        totalBooks,
-        borrowedCount,
-        overdueCount,
-      });
+            // Fetch currently borrowed books from API route
+            const borrowedBooksResponse = await fetch(`/api/dashboard/borrowed-books?userId=${user.id}`);
+            if (!borrowedBooksResponse.ok) {
+                const errorData = await borrowedBooksResponse.json();
+                throw new Error(errorData.message || 'Failed to fetch borrowed books');
+            }
+            const borrowedBooksData: BorrowedBook[] = await borrowedBooksResponse.json();
+            setBorrowedBooks(borrowedBooksData);
 
-      setStats({
-        totalbooks: totalBooks || 0,
-        borrowedbooks: borrowedCount || 0,
-        overduebooks: overdueCount || 0,
-      });
+        } catch (error) {
 
-      // 获取借阅的书籍详情
-      const { data: loansData, error: loansError } = await supabase
-        .from("loans")
-        .select(
-          `
-                    loan_id,
-                    due_date,
-                    books (
-                        book_id,
-                        title,
-                        author,
-                        cover_image_url
-                    )
-                `
-        )
-        .eq("user_id", user.id)
-        .eq("status", "borrowed")
-        .order("due_date", { ascending: true });
+            console.error('Error fetching dashboard data:', error);
+            toast({
+                title: "Error",
+                description: `Failed to fetch dashboard data: ${error instanceof Error ? error.message : 'An unexpected error occurred'}`,
+                variant: "destructive",
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    }, [user, userLoading, toast]); 
 
-      console.log("Loans data:", loansData);
+  // useEffect(() => {
+  //   // Guard clause: don't do anything if user isn't loaded yet
+  //   if (!user || userLoading) return;
 
-      if (loansError) {
-        throw loansError;
-      }
+  //   // Initial fetch when component mounts
+  //   fetchDashboardData();
 
-      if (loansData) {
-        const formattedBooks = loansData.map((loan) => ({
-          id: loan.loan_id,
-          title: loan.books?.title || "Unknown Title",
-          author: loan.books?.author || "Unknown Author",
-          due_date: loan.due_date,
-          cover_image: loan.books?.cover_image_url || null,
-        }));
+  //   // Set up an interval to fetch data every 5 minutes
+  //   const refreshInterval = setInterval(() => {
+  //     fetchDashboardData();
+  //   }, 5 * 60 * 1000); // 5 minutes in milliseconds
 
-        console.log("Formatted books:", formattedBooks);
-
-        setBorrowedBooks(formattedBooks);
-      }
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch dashboard data",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user, toast]);
-
-  useEffect(() => {
-    // Guard clause: don't do anything if user isn't loaded yet
-    if (!user || userLoading) return;
-    
-    // Initial fetch when component mounts
-    fetchDashboardData();
-    
-    // Set up an interval to fetch data every 5 minutes
-    const refreshInterval = setInterval(() => {
-        fetchDashboardData();
-    }, 5 * 60 * 1000); // 5 minutes in milliseconds
-    
-    // Cleanup function that runs when component unmounts
-    // This prevents memory leaks by clearing the interval
-    return () => clearInterval(refreshInterval);
-}, [user, userLoading, fetchDashboardData]);
-
-// useEffect(() => {
-//     // Function to handle tab visibility changes
-//     const handleVisibilityChange = () => {
-//         // Only fetch data when tab becomes visible
-//         if (document.visibilityState === 'visible') {
-//             fetchDashboardData();
-//         }
-//     };
-
-//     // Add event listener for visibility changes
-//     document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-//     // Cleanup function removes the event listener
-//     return () => {
-//         document.removeEventListener('visibilitychange', handleVisibilityChange);
-//     };
-// }, [fetchDashboardData]);
-
+  //   // Cleanup function that runs when component unmounts
+  //   // This prevents memory leaks by clearing the interval
+  //   return () => clearInterval(refreshInterval);
+  // }, [user, userLoading, fetchDashboardData]);
   const handleReturnBook = async (loanId: string) => {
     setIsReturning(loanId);
+    
     try {
-      const { error } = await supabase.rpc("return_book", {
-        p_loan_id: loanId,
+      const response = await fetch(`/api/loans/${loanId}`, {
+        method: 'PUT',
       });
-
-      if (error) throw error;
+      console.log('response', response)
+      if (!response.ok) throw new Error('Failed to return book');
 
       toast({
         title: "Success",
@@ -219,6 +160,22 @@ export default function Dashboard() {
     }
     fetchDashboardData();
   }, [user, userLoading, router, fetchDashboardData]);
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const response = await fetch("/api/dashboard");
+        const data = await response.json();
+        setDashboardData(data);
+      } catch (error) {
+        console.error("Error fetching dashboard stats:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchStats();
+  }, []);
 
   if (isLoading) {
     return (
@@ -248,7 +205,9 @@ export default function Dashboard() {
             <Library className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalbooks}</div>
+            <div className="text-2xl font-bold">
+              {dashboardData?.totalBooks || 0}
+            </div>
             <p className="text-xs text-muted-foreground">
               Available in library
             </p>
@@ -347,7 +306,7 @@ export default function Dashboard() {
                     !isOverdue &&
                     new Date(book.due_date).getTime() - new Date().getTime() <
                       3 * 24 * 60 * 60 * 1000;
-
+                  console.log(book)
                   return (
                     <TableRow key={book.id}>
                       <TableCell className="font-medium">

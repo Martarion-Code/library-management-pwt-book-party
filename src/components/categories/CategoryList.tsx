@@ -1,4 +1,4 @@
-import { Category } from '@/types/category'
+import { Category } from '@/types/database';
 import {
     Table,
     TableBody,
@@ -9,22 +9,29 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Pencil, Trash2 } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
 
-interface CategoryListTableProps {
-    categories: Category[]
+interface CategoryListProps {
+    categories: (Category & { _count?: { books: number } })[]
     isLoading: boolean
     onEdit: (category: Category) => void
-    onDelete: (categoryId: number) => void
+    onDelete: (id: string) => void
 }
 
-export default function CategoryListTable({
+export default function CategoryList({
     categories,
     isLoading,
     onEdit,
     onDelete,
-}: CategoryListTableProps) {
+}: CategoryListProps) {
     if (isLoading) {
-        return <div>Loading...</div>
+        return (
+            <div className="space-y-3">
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+            </div>
+        )
     }
 
     return (
@@ -32,18 +39,16 @@ export default function CategoryListTable({
             <TableHeader>
                 <TableRow>
                     <TableHead>Name</TableHead>
-                    <TableHead>Created At</TableHead>
-                    <TableHead className="w-[100px]">Actions</TableHead>
+                    <TableHead>Books Count</TableHead>
+                    <TableHead>Actions</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
                 {categories.map((category) => (
-                    <TableRow key={category.category_id}>
+                    <TableRow key={category.id}>
                         <TableCell>{category.name}</TableCell>
-                        <TableCell>
-                            {new Date(category.created_at!).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="space-x-2 flex items-center">
+                        <TableCell>{category._count?.books || 0}</TableCell>
+                        <TableCell className="space-x-2">
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -52,9 +57,10 @@ export default function CategoryListTable({
                                 <Pencil className="h-4 w-4" />
                             </Button>
                             <Button
-                                variant="destructive"
+                                variant="outline"
                                 size="sm"
-                                onClick={() => onDelete(category.category_id)}
+                                onClick={() => onDelete(category.id)}
+                                className="text-red-500 hover:text-red-600"
                             >
                                 <Trash2 className="h-4 w-4" />
                             </Button>

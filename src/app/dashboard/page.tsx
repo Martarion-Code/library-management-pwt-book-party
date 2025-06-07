@@ -23,7 +23,10 @@ const calculateProgress = (borrowed: number, total: number) => {
 }
 
 export default function Dashboard() {
-    const { user } = useAuth()
+    const { user, loading: userLoading } = useAuth()
+    console.log('user', user)
+        
+        console.log('loading',userLoading)
     const router = useRouter()
     const [stats, setStats] = useState<DashboardStats>({
         totalbooks: 0,
@@ -131,7 +134,7 @@ export default function Dashboard() {
             const { error } = await supabase.rpc('return_book', {
                 p_loan_id: loanId
             })
-
+            
             if (error) throw error
 
             toast({
@@ -152,12 +155,13 @@ export default function Dashboard() {
     }
 
     useEffect(() => {
+        if(userLoading) return;
         if (!user) {
             router.push('/login')
             return
         }
         fetchDashboardData()
-    }, [user, router, fetchDashboardData])
+    }, [user,userLoading, router, fetchDashboardData])
 
     if (isLoading) {
         return (
@@ -349,3 +353,4 @@ export default function Dashboard() {
         </div>
     )
 }
+

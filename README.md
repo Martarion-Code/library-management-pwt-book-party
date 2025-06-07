@@ -133,15 +133,9 @@ See the [AGPL-3.0 license](LICENSE) file for details.
 
 ## 👤 Author
 
-**Chan Meng**
-- LinkedIn: [chanmeng666](https://www.linkedin.com/in/chanmeng666/)
-- GitHub: [ChanMeng666](https://github.com/ChanMeng666)
+
 
 ## ⭐ Support
 
 If you found this project helpful, give it a ⭐️. Every star motivates us to keep improving!
 
-## 📱 Connect With Us
-
-[![LinkedIn](https://img.shields.io/badge/linkedin-%230077B5.svg?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/chanmeng666/)
-[![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)](https://github.com/ChanMeng666)

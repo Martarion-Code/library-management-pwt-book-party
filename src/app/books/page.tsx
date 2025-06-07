@@ -9,9 +9,13 @@ import { PaginationContent, PaginationItem } from '@/components/ui/pagination'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
+interface Category {
+    id: number;
+    name: string;
+}
 export default function BookCatalog() {
     const [books, setBooks] = useState<Book[]>([])
-    const [categories, setCategories] = useState<string[]>([])
+    const [categories, setCategories] = useState<Category[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
     const [selectedCategory, setSelectedCategory] = useState('all')
@@ -23,11 +27,11 @@ export default function BookCatalog() {
         try {
             const { data, error } = await supabase
                 .from('categories')
-                .select('name')
+                .select('name, category_id')
                 .order('name', { ascending: true })
 
             if (error) throw error
-            setCategories(data.map(category => category.name))
+            setCategories(data.map(category => ({id: category.category_id, name: category.name })))
         } catch (error) {
             console.error('Error fetching categories:', error)
         }
@@ -47,7 +51,7 @@ export default function BookCatalog() {
             }
 
             if (selectedCategory && selectedCategory !== 'all') {
-                query = query.eq('category', selectedCategory)
+                query = query.eq('category_id', selectedCategory)
             }
 
             const { data, error, count } = await query

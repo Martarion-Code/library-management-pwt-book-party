@@ -13,14 +13,22 @@ export default function AdminBookPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingBook, setEditingBook] = useState<Book | null>(null);
-  const [warningDialogOpen, setWarningDialogOpen] = useState(false)
-  const [warningMessage, setWarningMessage] = useState('')
+  const [warningDialogOpen, setWarningDialogOpen] = useState(false);
+  const [warningMessage, setWarningMessage] = useState("");
   const fetchBooks = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from("books")
-        .select("*")
+        .select(
+          `
+          *,
+          categories:category_id (
+            category_id,
+            name
+          )
+        `
+        )
         .order("title", { ascending: true });
 
       if (error) throw error;
@@ -35,6 +43,8 @@ export default function AdminBookPage() {
       setIsLoading(false);
     }
   }, []);
+
+  
 
   useEffect(() => {
     fetchBooks();
@@ -73,13 +83,13 @@ export default function AdminBookPage() {
       setWarningDialogOpen(true);
     } else {
       // Aman untuk dihapus
-       // onDelete(bookId);
+      // onDelete(bookId);
       try {
         const { error } = await supabase
           .from("books")
           .delete()
           .eq("book_id", bookId);
-  
+
         if (error) throw error;
         fetchBooks();
       } catch (error) {
@@ -87,7 +97,7 @@ export default function AdminBookPage() {
       }
     }
   };
-
+  console.log(books);
   return (
     <div className="space-y-6 p-6">
       <div className="flex justify-between items-center">
@@ -114,7 +124,6 @@ export default function AdminBookPage() {
           fetchBooks();
         }}
       />
-      
     </div>
   );
 }

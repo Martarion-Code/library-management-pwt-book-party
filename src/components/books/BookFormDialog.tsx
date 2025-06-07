@@ -20,7 +20,8 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { ImageUpload } from "../ui/image-upload";
-import { v4 as uuidv4 } from 'uuid'
+import { v4 as uuidv4 } from "uuid";
+import { Textarea } from "../ui/textarea";
 
 interface BookFormDialogProps {
   open: boolean;
@@ -42,8 +43,12 @@ export default function BookFormDialog({
     category_id: "",
     description: "",
     cover_image_url: "",
+    total_copies: "",
+    available_copies: "",
   });
-  const [categories, setCategories] = useState<{ label: string; value: string }[]>([]);
+  const [categories, setCategories] = useState<
+    { label: string; value: string }[]
+  >([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -55,8 +60,8 @@ export default function BookFormDialog({
         category_id: book.category_id,
         description: book.description || "",
         cover_image_url: book.cover_image_url || "",
-        total_copies: 5,
-        available_copies: 5,
+        total_copies: book.total_copies || 0,
+        available_copies: book.available_copies || 0,
       });
     } else {
       setFormData({
@@ -66,9 +71,15 @@ export default function BookFormDialog({
         category_id: "",
         description: "",
         cover_image_url: "",
+        total_copies: 0,
+        available_copies: 0,
       });
     }
   }, [book]);
+
+
+
+
 
   const handleImageUpload = async (file: File) => {
     try {
@@ -104,8 +115,12 @@ export default function BookFormDialog({
         .select("name, category_id")
         .order("name");
       if (!error && data) {
-        console.log(data)
-        setCategories(data.map((cat) => { return  {label: cat.name, value: cat.category_id}}));
+        console.log(data);
+        setCategories(
+          data.map((cat) => {
+            return { label: cat.name, value: cat.category_id };
+          })
+        );
       }
     };
     fetchCategories();
@@ -116,6 +131,7 @@ export default function BookFormDialog({
     setIsSubmitting(true);
 
     try {
+      console.log("Updating book:");
       if (book) {
         const { error } = await supabase
           .from("books")
@@ -123,7 +139,11 @@ export default function BookFormDialog({
           .eq("book_id", book.book_id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("books").insert({...formData, category_id: Number(formData.category_id), total_copies: 5, available_copies: 5});
+        
+        const { error } = await supabase
+          .from("books")
+          .insert({ ...formData, category_id: Number(formData.category_id) });
+          console.log('aa', error)
         if (error) throw error;
       }
       onSuccess();
@@ -136,68 +156,81 @@ export default function BookFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>{book ? "Edit Book" : "Add New Book"}</DialogTitle>
+      <DialogContent className="w-[90%] max-w-[500px] max-h-[90vh] overflow-y-auto p-4 md:p-6">
+        <DialogHeader className="mb-4">
+          <DialogTitle className="text-xl md:text-2xl">
+            {book ? "Edit Book" : "Add New Book"}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
-            <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) =>
-                setFormData({ ...formData, title: e.target.value })
-              }
-              required
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Title</Label>
+              <Input
+                id="title"
+                value={formData.title}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
+                required
+                className="w-full"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="author">Author</Label>
+              <Input
+                id="author"
+                value={formData.author}
+                onChange={(e) =>
+                  setFormData({ ...formData, author: e.target.value })
+                }
+                required
+                className="w-full"
+              />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="author">Author</Label>
-            <Input
-              id="author"
-              value={formData.author}
-              onChange={(e) =>
-                setFormData({ ...formData, author: e.target.value })
-              }
-              required
-            />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="isbn">ISBN</Label>
+              <Input
+                id="isbn"
+                value={formData.isbn}
+                onChange={(e) =>
+                  setFormData({ ...formData, isbn: e.target.value })
+                }
+                required
+                className="w-full"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="category_id">Category</Label>
+              <Select
+                value={String(formData.category_id)}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, category_id: value })
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem
+                      key={category.value}
+                      value={String(category.value)}
+                    >
+                      {category.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="isbn">ISBN</Label>
-            <Input
-              id="isbn"
-              value={formData.isbn}
-              onChange={(e) =>
-                setFormData({ ...formData, isbn: e.target.value })
-              }
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="category_id">Category</Label>
-            <Select
-              
-              value={formData.category_id}
-              onValueChange={(value) =>
-                setFormData({ ...formData, category_id: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.value}  value={String(category.value)}>
-                    {category.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
-            <Input
+            <Textarea
               id="description"
               value={formData.description}
               onChange={(e) =>
@@ -206,24 +239,61 @@ export default function BookFormDialog({
                   description: e.target.value,
                 })
               }
+              className="w-full resize-vertical"
+              placeholder="Enter book description..."
+              rows={4}
             />
           </div>
-          <div className="space-y-2">
-            <Label>Cover Image</Label>
-            <ImageUpload
-              value={formData.cover_image_url}
-              onChange={(value) =>
-                setFormData({
-                  ...formData,
-                  cover_image_url: value,
-                })
-              }
-              onUpload={handleImageUpload}
-              disabled={isSubmitting}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="total_copies">Total Copies</Label>
+              <Input
+                type="number"
+                id="total_copies"
+                value={formData.total_copies}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    total_copies: Number(e.target.value),
+                  })
+                }
+                required
+                className="w-full"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="available_copies">Available Copies</Label>
+              <Input
+                type="number"
+                id="available_copies"
+                value={formData.available_copies}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    available_copies: Number(e.target.value),
+                  })
+                }
+                required
+                className="w-full"
+              />
+            </div>
           </div>
-          <div className="space-y-2">
-            {/* <Label htmlFor="cover_image_url">Cover Image URL</Label> */}
+
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="w-full md:w-1/2 space-y-2">
+              <Label>Cover Image</Label>
+              <ImageUpload
+                value={formData.cover_image_url}
+                onChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    cover_image_url: value,
+                  })
+                }
+                onUpload={handleImageUpload}
+                disabled={isSubmitting}
+              />
+            </div>
             <Input
               type="hidden"
               id="cover_image_url"
@@ -236,8 +306,14 @@ export default function BookFormDialog({
               }
             />
           </div>
-          <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+
+          <div className="flex justify-end space-x-2 pt-4 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="w-full md:w-auto"
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>

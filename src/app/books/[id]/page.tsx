@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback,  } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase-client'
@@ -43,7 +43,7 @@ export default function BookDetails() {
     const { toast } = useToast()
     const bookId = params.id as string
 
-    const fetchBook = useCallback(async () => {
+   const fetchBook = useCallback(async () => {
         setIsLoading(true)
         try {
             const { data, error } = await supabase
@@ -93,6 +93,23 @@ export default function BookDetails() {
             toast({
                 title: "Error",
                 description: "This book is not available for borrowing",
+                variant: "destructive",
+            })
+            return
+        }
+
+        // Check if the user has borrowed a book without returning
+        const { data: loanData, error: loanError } = await supabase
+            .from('loans')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('status', 'borrowed')
+            .single()
+
+        if (loanError || loanData) {
+            toast({
+                title: "Error",
+                description: "You have a book that has not been returned yet. Please return the book first.",
                 variant: "destructive",
             })
             return
